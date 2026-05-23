@@ -1,31 +1,54 @@
 {
   "name": "sesamath-manuel-api",
   "version": "1.0.0",
-  "description": "My Remotion video",
-  "repository": {},
-  "license": "UNLICENSED",
+  "description": "API locale pour transformer le manuel Sesamath en service JSON, crops PNG et demo Remotion",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zay168/sesamath-manuel-api.git"
+  },
+  "homepage": "https://github.com/zay168/sesamath-manuel-api#readme",
+  "bugs": {
+    "url": "https://github.com/zay168/sesamath-manuel-api/issues"
+  },
+  "license": "MIT",
   "private": true,
   "dependencies": {
     "@remotion/cli": "4.0.465",
+    "@remotion/tailwind-v4": "4.0.465",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "remotion": "4.0.465",
-    "@remotion/tailwind-v4": "4.0.465",
-    "tailwindcss": "4.0.0"
+    "sharp": "^0.34.5",
+    "tailwindcss": "4.0.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@remotion/eslint-config-flat": "4.0.465",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.1",
     "@types/react": "19.2.7",
     "@types/web": "0.0.166",
     "eslint": "9.19.0",
     "prettier": "3.8.1",
+    "tsx": "^4.22.3",
     "typescript": "5.9.3"
   },
   "scripts": {
-    "dev": "remotion studio",
-    "build": "remotion bundle",
+    "dev": "tsx src/api/server.ts",
+    "api": "tsx src/api/server.ts",
+    "build:index": "tsx scripts/build-index.ts",
+    "build:index:functions": "tsx scripts/build-index.ts --from 189 --to 268",
+    "prepare:video": "tsx scripts/prepare-demo-assets.ts",
+    "video:studio": "remotion studio src/video/index.ts",
+    "video:still": "remotion still src/video/index.ts SesamathApiVideo out/sesamath-api-still.png --frame=90 --scale=0.5",
+    "video:render": "remotion render src/video/index.ts SesamathApiVideo out/sesamath-api-demo.mp4",
+    "smoke": "tsx scripts/smoke-test.ts",
+    "build": "npm run build:index:functions && npm run prepare:video && npm run video:still",
     "upgrade": "remotion upgrade",
-    "lint": "eslint src && tsc"
+    "lint": "eslint src scripts && tsc"
   },
   "sideEffects": [
     "*.css"
