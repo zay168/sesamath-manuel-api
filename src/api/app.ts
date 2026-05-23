@@ -3,8 +3,9 @@ import express from "express";
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
-import { exerciseViewHtml, homeHtml } from "./home";
+import { exerciseViewHtml, homeHtml, pageViewHtml } from "./home";
 import { openApiDocument } from "./openapi";
+import { buildIndex } from "../sesamath/build";
 import { cropExercise, upscalePageImage } from "../sesamath/crop";
 import { DEFAULT_OUVRAGE, OUVRAGE_PRESETS } from "../sesamath/constants";
 import { localOuvrages, ManifestRepository } from "../sesamath/repository";
@@ -27,6 +28,22 @@ export const createApp = (repository = new ManifestRepository(DEFAULT_OUVRAGE)) 
     return ouvrage === repository.ouvrageId() ? repository : new ManifestRepository(ouvrage);
   };
 
+  const ensurePageIndexed = async (currentRepository: ManifestRepository, page: number): Promise<void> => {
+    const needsPage = !currentRepository.hasManifest() || !currentRepository.page(page);
+    if (!needsPage) {
+      return;
+    }
+
+    await buildIndex({
+      ouvrage: currentRepository.ouvrageId(),
+      firstPage: page,
+      lastPage: page,
+      force: false,
+      quiet: true,
+    });
+    currentRepository.clearCache();
+  };
+
   app.get("/", (req, res) => {
     const currentRepository = repositoryFor(req);
     let manifest = null;
@@ -40,12 +57,34 @@ export const createApp = (repository = new ManifestRepository(DEFAULT_OUVRAGE)) 
   });
 
   app.get("/view/exercise", (req, res) => {
-    const ouvrage = ouvrageFrom(req);
-    const page = numberParam.parse(req.query.page);
-    const exercise = numberParam.parse(req.query.exercise);
-    const scale = z.coerce.number().int().min(1).max(8).default(DEFAULT_CROP_SCALE).parse(req.query.scale);
-    const imageUrl = `/api/exercises/${exercise}/crop?page=${page}&scale=${scale}&ouvrage=${encodeURIComponent(ouvrage)}`;
-    res.type("html").send(exerciseViewHtml({ ouvrage, page, exercise, scale, imageUrl }));
+    void (async () => {
+      const currentRepository = repositoryFor(req);
+      const ouvrage = currentRepository.ouvrageId();
+      const page = numberParam.parse(req.query.page);
+      const exercise = numberParam.parse(req.query.exercise);
+      const scale = z.coerce.number().int().min(1).max(8).default(DEFAULT_CROP_SCALE).parse(req.query.scale);
+      await ensurePageIndexed(currentRepository, page);
+      const imageUrl = `/api/exercises/${exercise}/crop?page=${page}&scale=${scale}&ouvrage=${encodeURIComponent(ouvrage)}`;
+      res.type("html").send(exerciseViewHtml({ ouvrage, page, exercise, scale, imageUrl }));
+    })().catch((error) => {
+      const message = error instanceof Error ? error.message : "Erreur inconnue";
+      res.status(400).type("html").send(homeHtml({ ouvrage: ouvrageFrom(req), manifest: null, error: message }));
+    });
+  });
+
+  app.get("/view/page", (req, res) => {
+    void (async () => {
+      const currentRepository = repositoryFor(req);
+      const ouvrage = currentRepository.ouvrageId();
+      const page = numberParam.parse(req.query.page);
+      const scale = z.coerce.number().int().min(1).max(8).default(DEFAULT_PAGE_SCALE).parse(req.query.scale);
+      await ensurePageIndexed(currentRepository, page);
+      const imageUrl = `/api/pages/${page}/upscaled-image?scale=${scale}&ouvrage=${encodeURIComponent(ouvrage)}`;
+      res.type("html").send(pageViewHtml({ ouvrage, page, scale, imageUrl }));
+    })().catch((error) => {
+      const message = error instanceof Error ? error.message : "Erreur inconnue";
+      res.status(400).type("html").send(homeHtml({ ouvrage: ouvrageFrom(req), manifest: null, error: message }));
+    });
   });
 
   app.get("/health", (req, res) => {

@@ -6,6 +6,9 @@ export const openApiDocument = {
     description: "API locale pour explorer les ouvrages, pages, exercices, images et crops du manuel Sesamath.",
   },
   paths: {
+    "/": { get: { summary: "Interface localhost principale" } },
+    "/view/page": { get: { summary: "Affiche une page entiere dans l'interface localhost" } },
+    "/view/exercise": { get: { summary: "Affiche un crop d'exercice dans l'interface localhost" } },
     "/health": { get: { summary: "Verifie l'etat du serveur et de l'index local" } },
     "/api/ouvrages": { get: { summary: "Liste les ouvrages preregles et les manifests locaux" } },
     "/api/chapters": { get: { summary: "Liste les chapitres indexes" } },

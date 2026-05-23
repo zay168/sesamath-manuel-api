@@ -11,6 +11,8 @@
 <p align="center">
   <a href="#demarrage-rapide">Demarrage</a>
   .
+  <a href="#mode-localhost">Localhost</a>
+  .
   <a href="#cli-zero-friction">CLI</a>
   .
   <a href="#api">API</a>
@@ -75,15 +77,7 @@ cd sesamath-manuel-api
 npm install
 ```
 
-Obtenir directement un exercice, sans construire tout le manuel :
-
-```powershell
-npm run sesa -- ex 60 p256 --open
-```
-
-Cette commande indexe la page si besoin, cree le PNG dans `out/crops`, puis l'ouvre.
-
-Lancer l'interface locale :
+Le mode principal est l'interface locale :
 
 ```powershell
 npm run api
@@ -93,6 +87,49 @@ Ouvrir ensuite :
 
 ```text
 http://localhost:4310
+```
+
+Depuis cette interface, tu peux ouvrir une page entiere sans choisir d'exercice. Si la page n'est pas encore indexee, elle est construite a la demande.
+
+Le terminal reste possible :
+
+```powershell
+npm run sesa -- page p256 --open
+npm run sesa -- ex 60 p256 --open
+```
+
+## Mode localhost
+
+Le mode `localhost` est l'usage normal du projet. L'API reste disponible, mais tu n'es pas cense taper les routes HTTP a la main.
+
+```powershell
+npm run api
+```
+
+Puis :
+
+```text
+http://localhost:4310
+```
+
+L'interface locale permet :
+
+- ouvrir une page entiere du manuel ;
+- passer a la page precedente ou suivante ;
+- ouvrir un exercice en crop PNG ;
+- changer d'ouvrage ;
+- voir l'etat de l'index local ;
+- acceder aux endpoints JSON seulement si necessaire.
+
+<p align="center">
+  <img src="./docs/media/localhost-page-view.png" alt="Vue localhost d'une page entiere du manuel" width="860">
+</p>
+
+Routes utiles du mode interface :
+
+```http
+GET /view/page?page=256&scale=2
+GET /view/exercise?page=256&exercise=60&scale=5
 ```
 
 ## CLI zero friction
@@ -109,6 +146,7 @@ Commandes utiles :
 
 | Besoin | Commande |
 | --- | --- |
+| Ouvrir une page | `npm run sesa -- page p256 --open` |
 | Ouvrir le crop d'un exercice | `npm run sesa -- ex 60 p256 --open` |
 | Creer le crop sans l'ouvrir | `npm run sesa -- ex 60 p256` |
 | Ouvrir une page upscalee | `npm run sesa -- page p256 --open` |
@@ -175,6 +213,12 @@ GET /api/pages?from=256&to=259
 GET /api/pages/256
 GET /api/pages/256/image
 GET /api/pages/256/upscaled-image?scale=2
+```
+
+Interface :
+
+```http
+GET /view/page?page=256&scale=2
 ```
 
 ### Exercices

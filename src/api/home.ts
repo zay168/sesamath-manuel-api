@@ -18,6 +18,231 @@ const ouvrageOptions = (selected: string): string => {
     .join("");
 };
 
+const shellCard = (title: string, command: string): string => `
+  <article class="command-card">
+    <span>${escapeHtml(title)}</span>
+    ${shellCommand(command)}
+  </article>`;
+
+const sharedStyles = `
+  :root {
+    color-scheme: light;
+    --ink: #1f1f1f;
+    --text: #3c4043;
+    --muted: #6b7280;
+    --line: #dfe3ea;
+    --line-strong: #c7d0dd;
+    --surface: rgba(255, 255, 255, .86);
+    --surface-solid: #fff;
+    --page: #f8fafd;
+    --blue: #4285f4;
+    --red: #ea4335;
+    --yellow: #fbbc04;
+    --green: #34a853;
+    --gemini-a: #4f7cff;
+    --gemini-b: #9b72f2;
+    --gemini-c: #24c6dc;
+    --shadow: 0 22px 70px rgba(60, 64, 67, .14);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--ink);
+    background:
+      linear-gradient(135deg, rgba(66, 133, 244, .12), transparent 28%),
+      linear-gradient(315deg, rgba(155, 114, 242, .10), transparent 30%),
+      linear-gradient(90deg, rgba(60, 64, 67, .045) 1px, transparent 1px),
+      linear-gradient(rgba(60, 64, 67, .045) 1px, transparent 1px),
+      #fff;
+    background-size: auto, auto, 56px 56px, 56px 56px, auto;
+    font-family: "Google Sans Text", "Google Sans", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  }
+  a { color: #1a73e8; text-decoration: none; font-weight: 750; }
+  button, input, select { font: inherit; }
+  code {
+    display: block;
+    padding: 13px 14px;
+    border-radius: 14px;
+    background: #f1f3f4;
+    color: #174ea6;
+    font: 14px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    padding: 16px clamp(18px, 4vw, 54px);
+    border-bottom: 1px solid rgba(223, 227, 234, .74);
+    background: rgba(255, 255, 255, .72);
+    backdrop-filter: blur(18px);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 850; }
+  .spark {
+    width: 34px;
+    height: 34px;
+    border-radius: 13px;
+    background: conic-gradient(from 210deg, var(--blue), var(--gemini-b), var(--gemini-c), var(--green), var(--blue));
+    box-shadow: 0 10px 24px rgba(66, 133, 244, .28);
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .status-dot { width: 9px; height: 9px; border-radius: 999px; background: var(--green); }
+  .status-dot.empty { background: var(--yellow); }
+  .shell { max-width: 1240px; margin: 0 auto; padding: 42px 24px 74px; }
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1.52fr) 360px;
+    gap: 24px;
+    align-items: start;
+  }
+  .local-card, .side-card, .panel, .viewer-card {
+    border: 1px solid rgba(223, 227, 234, .92);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(20px);
+  }
+  .local-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 34px;
+    padding: clamp(24px, 3vw, 36px);
+  }
+  .local-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 6px;
+    background: linear-gradient(90deg, var(--blue), var(--gemini-b), var(--gemini-c), var(--green));
+  }
+  .eyebrow {
+    display: inline-flex;
+    width: max-content;
+    align-items: center;
+    gap: 9px;
+    min-height: 34px;
+    padding: 0 13px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+    color: #174ea6;
+    font-weight: 800;
+    font-size: 14px;
+  }
+  h1 {
+    max-width: 780px;
+    margin: 22px 0 0;
+    font-size: clamp(38px, 5.4vw, 68px);
+    line-height: .98;
+    letter-spacing: -2px;
+  }
+  .gemini-word {
+    background: linear-gradient(90deg, #174ea6, #7b61ff, #0b8793);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .lead { max-width: 760px; margin: 16px 0 0; color: var(--text); font-size: 20px; line-height: 1.42; }
+  .launcher-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 24px; }
+  .launcher {
+    border: 1px solid var(--line);
+    border-radius: 26px;
+    background: #fff;
+    padding: 20px;
+  }
+  .launcher.primary {
+    border-color: rgba(66, 133, 244, .38);
+    background: linear-gradient(180deg, #fff, #f7fbff);
+  }
+  .launcher h2 { margin: 0; font-size: 25px; letter-spacing: -.2px; }
+  .launcher p { margin: 8px 0 18px; color: var(--muted); line-height: 1.35; }
+  .form-grid { display: grid; grid-template-columns: 1fr 120px 100px; gap: 12px; align-items: end; }
+  .exercise-form { grid-template-columns: 1fr 1fr; }
+  .form-grid label:first-child { grid-column: 1 / -1; }
+  label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+  input, select {
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    background: #fff;
+    color: var(--ink);
+    outline: none;
+  }
+  input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(66, 133, 244, .16); }
+  .action {
+    height: 48px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 999px;
+    background: #0b57d0;
+    color: #fff;
+    font-weight: 850;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .action.secondary { background: #eef3fe; color: #174ea6; }
+  .side-card { border-radius: 30px; padding: 24px; }
+  .side-card h2 { margin: 0 0 16px; font-size: 20px; }
+  .metric-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .metric { border-radius: 20px; background: #f6f8fc; padding: 18px; }
+  .metric b { display: block; color: #0b57d0; font-size: 31px; line-height: 1; }
+  .metric span { display: block; margin-top: 8px; color: var(--muted); font-size: 13px; }
+  .quick-list { display: grid; gap: 10px; margin-top: 18px; }
+  .quick-list a { display: flex; justify-content: space-between; gap: 12px; padding: 13px 14px; border-radius: 16px; background: #fff; border: 1px solid var(--line); color: var(--ink); }
+  .panel { margin-top: 24px; border-radius: 30px; padding: 26px; }
+  .panel h2 { margin: 0 0 16px; font-size: 24px; }
+  .command-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .command-card { border: 1px solid var(--line); border-radius: 22px; background: #fff; padding: 18px; }
+  .command-card span { display: block; margin-bottom: 12px; font-weight: 850; }
+  .error { margin-top: 18px; padding: 14px 16px; border-radius: 16px; background: #fce8e6; color: #a50e0e; }
+  .viewer-shell { max-width: 1180px; margin: 0 auto; padding: 34px 22px 70px; }
+  .viewer-head { display: flex; justify-content: space-between; gap: 18px; align-items: start; margin-bottom: 24px; }
+  .viewer-head h1 { margin: 0; max-width: none; font-size: clamp(34px, 6vw, 62px); }
+  .viewer-meta { margin-top: 8px; color: var(--muted); }
+  .viewer-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+  .chip-link { display: inline-flex; align-items: center; min-height: 42px; padding: 0 15px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: #174ea6; }
+  .viewer-card { border-radius: 30px; overflow: hidden; background: #fff; }
+  .viewer-card img { display: block; width: 100%; height: auto; }
+  .page-frame { max-width: 920px; margin: 0 auto; padding: 18px; background: #fff; }
+  .page-frame img { border: 1px solid var(--line); border-radius: 20px; }
+  .crop-frame img { width: 100%; }
+  .footer-command { margin-top: 16px; }
+  @media (max-width: 980px) {
+    .workspace, .launcher-grid, .command-grid { grid-template-columns: 1fr; }
+    .form-grid, .exercise-form { grid-template-columns: 1fr 1fr; }
+    .action { grid-column: 1 / -1; }
+  }
+  @media (max-width: 560px) {
+    .topbar { align-items: start; flex-direction: column; }
+    .shell { padding: 24px 14px 52px; }
+    h1 { font-size: 43px; letter-spacing: -1.2px; }
+    .local-card, .side-card, .panel { border-radius: 24px; padding: 20px; }
+    .form-grid, .exercise-form, .metric-grid { grid-template-columns: 1fr; }
+    .viewer-head { flex-direction: column; }
+    .viewer-actions { justify-content: flex-start; }
+  }
+`;
+
 export const homeHtml = (params: { ouvrage: string; manifest: Manifest | null; error?: string }): string => {
   const indexed = params.manifest !== null;
   const pageCount = params.manifest?.pages.length ?? 0;
@@ -28,164 +253,131 @@ export const homeHtml = (params: { ouvrage: string; manifest: Manifest | null; e
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sesamath Manuel API</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --text: #202124;
-      --muted: #5f6368;
-      --line: #dadce0;
-      --soft: #f8fafd;
-      --blue: #4285f4;
-      --red: #ea4335;
-      --yellow: #fbbc04;
-      --green: #34a853;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      color: var(--text);
-      background:
-        linear-gradient(90deg, rgba(60, 64, 67, .045) 1px, transparent 1px),
-        linear-gradient(rgba(60, 64, 67, .045) 1px, transparent 1px),
-        #fff;
-      background-size: 56px 56px;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    main { max-width: 1180px; margin: 0 auto; padding: 52px 28px 72px; }
-    .dots { display: flex; gap: 10px; margin-bottom: 56px; }
-    .dots span { width: 14px; height: 14px; border-radius: 999px; }
-    .blue { background: var(--blue); } .red { background: var(--red); } .yellow { background: var(--yellow); } .green { background: var(--green); }
-    .hero { display: grid; grid-template-columns: 1fr 360px; gap: 42px; align-items: end; }
-    h1 { max-width: 760px; margin: 0; font-size: clamp(48px, 7vw, 88px); line-height: .98; letter-spacing: -1.8px; }
-    .lead { max-width: 720px; margin: 24px 0 0; color: var(--muted); font-size: 22px; line-height: 1.42; }
-    .status, .panel, .result {
-      border: 1px solid var(--line);
-      border-radius: 28px;
-      background: rgba(255, 255, 255, .92);
-      box-shadow: 0 22px 70px rgba(60, 64, 67, .12);
-    }
-    .status { padding: 24px; }
-    .status strong { display: block; font-size: 18px; }
-    .status span { display: block; margin-top: 6px; color: var(--muted); }
-    .metric-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 18px; }
-    .metric { padding: 16px; border-radius: 18px; background: var(--soft); }
-    .metric b { display: block; font-size: 30px; color: var(--blue); }
-    .metric small { color: var(--muted); }
-    .panel { margin-top: 34px; padding: 28px; }
-    .panel h2 { margin: 0 0 18px; font-size: 28px; }
-    form { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 14px; align-items: end; }
-    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
-    input, select {
-      width: 100%;
-      height: 48px;
-      padding: 0 14px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fff;
-      color: var(--text);
-      font: inherit;
-    }
-    button, .button {
-      height: 48px;
-      padding: 0 20px;
-      border: 0;
-      border-radius: 999px;
-      background: var(--blue);
-      color: #fff;
-      font-weight: 800;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      white-space: nowrap;
-    }
-    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
-    .card { border: 1px solid var(--line); border-radius: 22px; padding: 20px; background: #fff; }
-    .card:nth-child(1) { border-top: 6px solid var(--blue); }
-    .card:nth-child(2) { border-top: 6px solid var(--green); }
-    .card:nth-child(3) { border-top: 6px solid var(--yellow); }
-    .card h3 { margin: 0 0 12px; font-size: 18px; }
-    code {
-      display: block;
-      padding: 13px 14px;
-      border-radius: 14px;
-      background: #f1f3f4;
-      color: #174ea6;
-      font: 14px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
-      overflow-wrap: anywhere;
-      white-space: normal;
-    }
-    .error { margin-top: 18px; padding: 14px 16px; border-radius: 16px; background: #fce8e6; color: #a50e0e; }
-    @media (max-width: 900px) {
-      .hero, form, .grid { grid-template-columns: 1fr; }
-      main { padding: 32px 18px 54px; }
-    }
-  </style>
+  <title>Sesamath Localhost</title>
+  <style>${sharedStyles}</style>
 </head>
 <body>
-  <main>
-    <div class="dots"><span class="blue"></span><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
-    <section class="hero">
-      <div>
-        <h1>Un manuel Sesamath. Une API locale.</h1>
-        <p class="lead">Cherche un exercice, ouvre son crop, ou construis seulement les pages dont tu as besoin. Pas besoin de taper une requete HTTP dans le terminal.</p>
-      </div>
-      <aside class="status">
-        <strong>${indexed ? "Index local pret" : "Index local absent"}</strong>
-        <span>${indexed ? escapeHtml(params.ouvrage) : "Commence par une commande rapide ci-dessous."}</span>
-        <div class="metric-row">
-          <div class="metric"><b>${pageCount}</b><small>pages</small></div>
-          <div class="metric"><b>${exerciseCount}</b><small>exercices</small></div>
+  <header class="topbar">
+    <div class="brand"><span class="spark"></span><span>Sesamath Localhost</span></div>
+    <div class="status-pill"><span class="status-dot ${indexed ? "" : "empty"}"></span>${indexed ? `Index pret &middot; ${escapeHtml(params.ouvrage)}` : "Index a la demande"}</div>
+  </header>
+
+  <main class="shell">
+    <section class="workspace">
+      <div class="local-card">
+        <span class="eyebrow">Mode localhost d'abord</span>
+        <h1>Ouvre une <span class="gemini-word">page</span>, puis zoome si besoin.</h1>
+        <p class="lead">L'API reste disponible, mais l'usage normal se fait ici : page entiere, exercice croppe, ouvrage, scale. Les pages manquantes sont indexees a la demande.</p>
+
+        ${params.error ? `<div class="error">${escapeHtml(params.error)}</div>` : ""}
+
+        <div class="launcher-grid">
+          <article class="launcher primary">
+            <h2>Ouvrir une page</h2>
+            <p>Le mode principal : consulter la page du manuel sans choisir d'exercice.</p>
+            <form class="form-grid" action="/view/page" method="get">
+              <label>Ouvrage
+                <select name="ouvrage">${ouvrageOptions(params.ouvrage)}</select>
+              </label>
+              <label>Page
+                <input name="page" value="256" inputmode="numeric">
+              </label>
+              <label>Scale
+                <input name="scale" value="2" inputmode="numeric">
+              </label>
+              <button class="action" type="submit">Ouvrir</button>
+            </form>
+          </article>
+
+          <article class="launcher">
+            <h2>Ouvrir un exercice</h2>
+            <p>Pour isoler un enonce et l'obtenir en PNG propre.</p>
+            <form class="form-grid exercise-form" action="/view/exercise" method="get">
+              <label>Ouvrage
+                <select name="ouvrage">${ouvrageOptions(params.ouvrage)}</select>
+              </label>
+              <label>Page
+                <input name="page" value="256" inputmode="numeric">
+              </label>
+              <label>Exercice
+                <input name="exercise" value="60" inputmode="numeric">
+              </label>
+              <label>Scale
+                <input name="scale" value="5" inputmode="numeric">
+              </label>
+              <button class="action secondary" type="submit">Crop</button>
+            </form>
+          </article>
         </div>
+      </div>
+
+      <aside class="side-card">
+        <h2>Index local</h2>
+        <div class="metric-grid">
+          <div class="metric"><b>${pageCount}</b><span>pages</span></div>
+          <div class="metric"><b>${exerciseCount}</b><span>exercices</span></div>
+        </div>
+        <nav class="quick-list" aria-label="Raccourcis">
+          <a href="/view/page?page=256&scale=2&ouvrage=${encodeURIComponent(params.ouvrage)}"><span>Page 256</span><b>ouvrir</b></a>
+          <a href="/view/exercise?page=256&exercise=60&scale=5&ouvrage=${encodeURIComponent(params.ouvrage)}"><span>Exercice 60</span><b>crop</b></a>
+          <a href="/api/ouvrages"><span>Ouvrages</span><b>JSON</b></a>
+          <a href="/api/openapi.json"><span>OpenAPI</span><b>JSON</b></a>
+        </nav>
       </aside>
     </section>
 
-    ${params.error ? `<div class="error">${escapeHtml(params.error)}</div>` : ""}
-
     <section class="panel">
-      <h2>Afficher directement un exercice</h2>
-      <form action="/view/exercise" method="get">
-        <label>Ouvrage
-          <select name="ouvrage">${ouvrageOptions(params.ouvrage)}</select>
-        </label>
-        <label>Page
-          <input name="page" value="256" inputmode="numeric">
-        </label>
-        <label>Exercice
-          <input name="exercise" value="60" inputmode="numeric">
-        </label>
-        <label>Scale
-          <input name="scale" value="5" inputmode="numeric">
-        </label>
-        <button type="submit">Ouvrir</button>
-      </form>
-    </section>
-
-    <section class="panel">
-      <h2>Commandes sans friction</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Un exercice, maintenant</h3>
-          ${shellCommand("npm run sesa -- ex 60 p256 --open")}
-        </div>
-        <div class="card">
-          <h3>Une page precise</h3>
-          ${shellCommand("npm run build:index -- --page 256")}
-        </div>
-        <div class="card">
-          <h3>Un autre manuel</h3>
-          ${shellCommand("npm run build:index -- --ouvrage ms1spe_2019 --from 250 --to 260")}
-        </div>
+      <h2>Commandes utiles</h2>
+      <div class="command-grid">
+        ${shellCard("Une page sans interface", "npm run sesa -- page p256 --open")}
+        ${shellCard("Un exercice croppe", "npm run sesa -- ex 60 p256 --open")}
+        ${shellCard("Un autre manuel", "npm run build:index -- --ouvrage ms1spe_2019 --from 250 --to 260")}
       </div>
     </section>
 
     <section class="panel">
-      <h2>Si tu veux vraiment appeler l'API depuis Windows</h2>
+      <h2>API seulement si tu en as besoin</h2>
+      ${shellCommand('curl.exe "http://localhost:4310/api/pages/256/upscaled-image?scale=2" --output page256.png')}
       ${shellCommand('curl.exe "http://localhost:4310/api/exercises/60/crop?page=256&scale=5" --output ex60.png')}
-      ${shellCommand('Invoke-WebRequest "http://localhost:4310/api/exercises/60/crop?page=256&scale=5" -OutFile ex60.png')}
     </section>
+  </main>
+</body>
+</html>`;
+};
+
+export const pageViewHtml = (params: { ouvrage: string; page: number; scale: number; imageUrl: string }): string => {
+  const title = `Page ${params.page}`;
+  const prev = Math.max(1, params.page - 1);
+  const next = params.page + 1;
+  return `<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${escapeHtml(title)}</title>
+  <style>${sharedStyles}</style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="spark"></span><span>Sesamath Localhost</span></a>
+    <div class="status-pill"><span class="status-dot"></span>${escapeHtml(params.ouvrage)}</div>
+  </header>
+  <main class="viewer-shell">
+    <section class="viewer-head">
+      <div>
+        <h1>${escapeHtml(title)}</h1>
+        <div class="viewer-meta">${escapeHtml(params.ouvrage)} &middot; page entiere &middot; scale ${params.scale}</div>
+      </div>
+      <nav class="viewer-actions" aria-label="Navigation page">
+        <a class="chip-link" href="/view/page?page=${prev}&scale=${params.scale}&ouvrage=${encodeURIComponent(params.ouvrage)}">Page precedente</a>
+        <a class="chip-link" href="/view/page?page=${next}&scale=${params.scale}&ouvrage=${encodeURIComponent(params.ouvrage)}">Page suivante</a>
+        <a class="chip-link" href="${escapeHtml(params.imageUrl)}" download>Telecharger PNG</a>
+      </nav>
+    </section>
+    <section class="viewer-card page-frame">
+      <img src="${escapeHtml(params.imageUrl)}" alt="${escapeHtml(title)}">
+    </section>
+    <div class="footer-command">${shellCommand(`npm run sesa -- page p${params.page} --ouvrage ${params.ouvrage} --open`)}</div>
   </main>
 </body>
 </html>`;
@@ -199,25 +391,28 @@ export const exerciseViewHtml = (params: { ouvrage: string; page: number; exerci
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)}</title>
-  <style>
-    body { margin: 0; background: #f8fafd; color: #202124; font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif; }
-    main { max-width: 1100px; margin: 0 auto; padding: 36px 22px 64px; }
-    a { color: #1a73e8; text-decoration: none; font-weight: 700; }
-    .bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; gap: 18px; }
-    h1 { margin: 0; font-size: clamp(32px, 5vw, 58px); letter-spacing: -1px; }
-    .meta { color: #5f6368; margin-top: 8px; }
-    .frame { margin-top: 26px; border: 1px solid #dadce0; border-radius: 28px; background: #fff; box-shadow: 0 22px 70px rgba(60, 64, 67, .14); overflow: hidden; }
-    .frame img { display: block; width: 100%; height: auto; }
-    code { display: block; margin-top: 18px; padding: 14px; border-radius: 14px; background: #eef3fe; color: #174ea6; overflow-x: auto; white-space: nowrap; }
-  </style>
+  <style>${sharedStyles}</style>
 </head>
 <body>
-  <main>
-    <div class="bar"><a href="/">Retour</a><a href="${escapeHtml(params.imageUrl)}" download>Telecharger le PNG</a></div>
-    <h1>${escapeHtml(title)}</h1>
-    <div class="meta">${escapeHtml(params.ouvrage)} · scale ${params.scale}</div>
-    <div class="frame"><img src="${escapeHtml(params.imageUrl)}" alt="${escapeHtml(title)}"></div>
-    <code>npm run sesa -- ex ${params.exercise} p${params.page} --ouvrage ${escapeHtml(params.ouvrage)} --open</code>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="spark"></span><span>Sesamath Localhost</span></a>
+    <div class="status-pill"><span class="status-dot"></span>${escapeHtml(params.ouvrage)}</div>
+  </header>
+  <main class="viewer-shell">
+    <section class="viewer-head">
+      <div>
+        <h1>${escapeHtml(title)}</h1>
+        <div class="viewer-meta">${escapeHtml(params.ouvrage)} &middot; crop PNG &middot; scale ${params.scale}</div>
+      </div>
+      <nav class="viewer-actions" aria-label="Navigation exercice">
+        <a class="chip-link" href="/view/page?page=${params.page}&scale=2&ouvrage=${encodeURIComponent(params.ouvrage)}">Voir la page</a>
+        <a class="chip-link" href="${escapeHtml(params.imageUrl)}" download>Telecharger PNG</a>
+      </nav>
+    </section>
+    <section class="viewer-card crop-frame">
+      <img src="${escapeHtml(params.imageUrl)}" alt="${escapeHtml(title)}">
+    </section>
+    <div class="footer-command">${shellCommand(`npm run sesa -- ex ${params.exercise} p${params.page} --ouvrage ${params.ouvrage} --open`)}</div>
   </main>
 </body>
 </html>`;
