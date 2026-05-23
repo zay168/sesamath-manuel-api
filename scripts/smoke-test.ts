@@ -1,9 +1,16 @@
 import assert from "node:assert/strict";
+import { buildIndex } from "../src/sesamath/build";
 import { cropExercise } from "../src/sesamath/crop";
+import { DEFAULT_OUVRAGE } from "../src/sesamath/constants";
 import { ManifestRepository } from "../src/sesamath/repository";
 
 const main = async () => {
   const repository = new ManifestRepository();
+  if (!repository.hasManifest() || !repository.page(256)) {
+    await buildIndex({ ouvrage: DEFAULT_OUVRAGE, firstPage: 256, lastPage: 256, force: false, quiet: true });
+    repository.clearCache();
+  }
+
   const manifest = repository.load();
 
   assert.ok(manifest.pages.length > 0, "manifest pages");

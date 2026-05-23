@@ -38,7 +38,9 @@
   },
   "scripts": {
     "dev": "tsx src/api/server.ts",
+    "start": "tsx src/api/server.ts",
     "api": "tsx src/api/server.ts",
+    "sesa": "tsx scripts/sesa.ts",
     "build:index": "tsx scripts/build-index.ts",
     "build:index:functions": "tsx scripts/build-index.ts --from 189 --to 268",
     "prepare:video": "tsx scripts/prepare-demo-assets.ts",

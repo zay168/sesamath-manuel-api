@@ -37,8 +37,13 @@ const decodeHtml = (value: string): string => {
     .trim();
 };
 
-export const extractPageNumbersFromHtml = (html: string): [number, number] | null => {
-  const pageMatches = [...html.matchAll(/ms2_2019_page(\d+)\.gif/g)].map((match) => Number(match[1]));
+const escapeRegExp = (value: string): string => {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+export const extractPageNumbersFromHtml = (html: string, ouvrage: string): [number, number] | null => {
+  const pagePattern = new RegExp(`${escapeRegExp(ouvrage)}_page(\\d+)\\.gif`, "g");
+  const pageMatches = [...html.matchAll(pagePattern)].map((match) => Number(match[1]));
   if (pageMatches.length < 2) {
     return null;
   }
@@ -79,7 +84,7 @@ export const extractAtomIndex = (html: string): Map<string, AtomMeta> => {
 };
 
 export const extractPages = (ouvrage: string, pageNumber: number, html: string): PageRecord[] => {
-  const pages = extractPageNumbersFromHtml(html);
+  const pages = extractPageNumbersFromHtml(html, ouvrage);
   if (!pages) {
     return [];
   }
@@ -87,7 +92,7 @@ export const extractPages = (ouvrage: string, pageNumber: number, html: string):
   return pages.map((actualPage) => ({
     ouvrage,
     pageNumber: actualPage,
-    chapter: chapterForPage(actualPage),
+    chapter: chapterForPage(ouvrage, actualPage),
     title: `Page ${actualPage}`,
     imagePath: `data/${ouvrage}/pages/p${actualPage}.gif`,
     htmlPath: `data/${ouvrage}/html/p${pageNumber}.html`,
@@ -100,7 +105,7 @@ export const extractExerciseRects = (
   html: string,
   atomIndex: Map<string, AtomMeta>,
 ): ExerciseRecord[] => {
-  const pageNumbers = extractPageNumbersFromHtml(html);
+  const pageNumbers = extractPageNumbersFromHtml(html, ouvrage);
   if (!pageNumbers) {
     return [];
   }
@@ -128,7 +133,7 @@ export const extractExerciseRects = (
     if (!rects.has(key)) {
       rects.set(key, {
         ouvrage,
-        chapter: chapterForPage(pageNumber),
+        chapter: chapterForPage(ouvrage, pageNumber),
         pageNumber,
         exerciseNumber: atom.exerciseNumber,
         label: atom.label,

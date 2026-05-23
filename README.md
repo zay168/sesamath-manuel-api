@@ -11,6 +11,8 @@
 <p align="center">
   <a href="#demarrage-rapide">Demarrage</a>
   .
+  <a href="#cli-zero-friction">CLI</a>
+  .
   <a href="#api">API</a>
   .
   <a href="#upscaler">Upscaler</a>
@@ -59,6 +61,7 @@ En clair : tu peux demander `exercice 60 page 256`, et l'API retrouve la bonne z
 | `src/api` | Serveur Express, routes JSON, OpenAPI minimal |
 | `src/sesamath` | Constantes du manuel, parseur HTML, repository, crops, upscaler |
 | `scripts/build-index.ts` | Telecharge les pages et construit le manifest local |
+| `scripts/sesa.ts` | CLI locale pour obtenir un exercice ou une page sans requete HTTP |
 | `scripts/prepare-demo-assets.ts` | Prepare les crops et pages upscalees pour la video |
 | `scripts/smoke-test.ts` | Test rapide du manifest et du crop |
 | `src/video` | Composition Remotion style Google / Material |
@@ -72,13 +75,15 @@ cd sesamath-manuel-api
 npm install
 ```
 
-Construire l'index complet du manuel :
+Obtenir directement un exercice, sans construire tout le manuel :
 
 ```powershell
-npm run build:index
+npm run sesa -- ex 60 p256 --open
 ```
 
-Lancer l'API :
+Cette commande indexe la page si besoin, cree le PNG dans `out/crops`, puis l'ouvre.
+
+Lancer l'interface locale :
 
 ```powershell
 npm run api
@@ -88,6 +93,40 @@ Ouvrir ensuite :
 
 ```text
 http://localhost:4310
+```
+
+## CLI zero friction
+
+Le terminal Windows ne sait pas executer `GET /api/...`. `GET` est une notation HTTP de documentation, pas une commande `cmd.exe`.
+
+Utilise plutot :
+
+```powershell
+npm run sesa -- ex 60 p256 --open
+```
+
+Commandes utiles :
+
+| Besoin | Commande |
+| --- | --- |
+| Ouvrir le crop d'un exercice | `npm run sesa -- ex 60 p256 --open` |
+| Creer le crop sans l'ouvrir | `npm run sesa -- ex 60 p256` |
+| Ouvrir une page upscalee | `npm run sesa -- page p256 --open` |
+| Indexer seulement une page | `npm run build:index -- --page 256` |
+| Indexer une plage | `npm run build:index -- --from 241 --to 268` |
+| Lister les ouvrages connus | `npm run sesa -- books` |
+
+Autre ouvrage Sesamath :
+
+```powershell
+npm run sesa -- ex 58 p256 --ouvrage ms1spe_2019 --open
+npm run build:index -- --ouvrage ms1spe_2019 --from 250 --to 260
+```
+
+Pour un ouvrage non preregle, donne explicitement l'identifiant et la plage :
+
+```powershell
+npm run build:index -- --ouvrage <id_ouvrage> --from <page_debut> --to <page_fin>
 ```
 
 ## Mode fonctions seulement
@@ -107,6 +146,8 @@ Ce mode indexe les pages `189` a `268`, c'est-a-dire :
 | F10 | 241-268 | Signe d'une fonction et inequations |
 
 ## API
+
+La notation suivante est une notation HTTP. Elle se colle dans un navigateur, un client REST, `curl.exe`, ou `Invoke-WebRequest`, pas directement dans `cmd.exe`.
 
 ### Etat du serveur
 
@@ -143,6 +184,13 @@ GET /api/exercises?page=256
 GET /api/exercises?number=60
 GET /api/exercises/60?page=256
 GET /api/exercises/60/crop?page=256&scale=5
+```
+
+Sous Windows :
+
+```powershell
+curl.exe "http://localhost:4310/api/exercises/60/crop?page=256&scale=5" --output ex60.png
+Invoke-WebRequest "http://localhost:4310/api/exercises/60/crop?page=256&scale=5" -OutFile ex60.png
 ```
 
 ### Recherche
@@ -217,6 +265,12 @@ Pour reconstruire exactement le cache :
 npm run build:index
 ```
 
+Pour reconstruire seulement un autre manuel ou une plage :
+
+```powershell
+npm run build:index -- --ouvrage ms1spe_2019 --from 250 --to 260
+```
+
 Pour forcer un re-telechargement :
 
 ```powershell
@@ -251,12 +305,12 @@ Dernier etat verifie localement :
 - Le crop depend des rectangles HTML du manuel numerique.
 - La qualite visuelle reste bornee par les GIF source.
 - Pour une vraie haute definition, il faudrait rasteriser une source PDF propre ou utiliser des sources vectorielles quand elles existent.
-- Le parseur est adapte a la structure HTML actuelle du manuel Sesamath `ms2_2019`.
+- Le parseur est generalise par `--ouvrage`, mais les chapitres nommes ne sont preregles que pour `ms2_2019` pour l'instant.
 
 ## Feuille de route
 
 - [ ] endpoint pour exporter une page + ses exercices en JSON pedagogique ;
-- [ ] CLI `sesamath get ex 60 p256` ;
+- [x] CLI locale `npm run sesa -- ex 60 p256 --open` ;
 - [ ] mode OCR optionnel pour recuperer le texte brut des exercices ;
 - [ ] frontend local de revision ;
 - [ ] rendu PDF/HTML de fiches d'exercices ;

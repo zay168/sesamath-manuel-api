@@ -9,8 +9,20 @@ export class ManifestRepository {
 
   constructor(private readonly ouvrage = DEFAULT_OUVRAGE) {}
 
+  ouvrageId(): string {
+    return this.ouvrage;
+  }
+
   manifestPath(): string {
     return dataPath(this.ouvrage, "manifest.json");
+  }
+
+  hasManifest(): boolean {
+    return fs.existsSync(this.manifestPath());
+  }
+
+  clearCache(): void {
+    this.manifestCache = null;
   }
 
   load(): Manifest {
@@ -20,7 +32,7 @@ export class ManifestRepository {
 
     const filePath = this.manifestPath();
     if (!fs.existsSync(filePath)) {
-      throw new Error(`Manifest introuvable: ${filePath}. Lancez npm run build:index.`);
+      throw new Error(`Manifest introuvable: ${filePath}. Lancez npm run build:index ou npm run sesa -- ex 60 p256.`);
     }
 
     this.manifestCache = JSON.parse(fs.readFileSync(filePath, "utf8")) as Manifest;
@@ -83,3 +95,16 @@ export class ManifestRepository {
     return path.join(path.resolve(__dirname, "..", ".."), relativePath);
   }
 }
+
+export const localOuvrages = (): string[] => {
+  const dataDir = dataPath();
+  if (!fs.existsSync(dataDir)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(dataDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && fs.existsSync(dataPath(entry.name, "manifest.json")))
+    .map((entry) => entry.name)
+    .sort();
+};

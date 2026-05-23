@@ -1,26 +1,4 @@
-export type ChapterId =
-  | "sommaire"
-  | "AP1"
-  | "NC2"
-  | "NC3"
-  | "NC4"
-  | "G5"
-  | "G6"
-  | "G7"
-  | "F8"
-  | "F9"
-  | "F10"
-  | "SP11"
-  | "SP12"
-  | "SP13"
-  | "lexique"
-  | "proprietes"
-  | "formulaire"
-  | "logique"
-  | "fiche"
-  | "solutions"
-  | "calculatrice"
-  | "unknown";
+export type ChapterId = string;
 
 export type Chapter = {
   id: ChapterId;
@@ -29,11 +7,21 @@ export type Chapter = {
   lastPage: number;
 };
 
+export type OuvragePreset = {
+  id: string;
+  title: string;
+  level: string;
+  firstPage: number;
+  lastPage: number;
+  chapters: Chapter[];
+};
+
 export type BuildOptions = {
   ouvrage: string;
   firstPage: number;
   lastPage: number;
   force: boolean;
+  quiet?: boolean;
 };
 
 export type PageRecord = {

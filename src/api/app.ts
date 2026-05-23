@@ -3,10 +3,11 @@ import express from "express";
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
+import { exerciseViewHtml, homeHtml } from "./home";
 import { openApiDocument } from "./openapi";
 import { cropExercise, upscalePageImage } from "../sesamath/crop";
-import { DEFAULT_OUVRAGE } from "../sesamath/constants";
-import { ManifestRepository } from "../sesamath/repository";
+import { DEFAULT_OUVRAGE, OUVRAGE_PRESETS } from "../sesamath/constants";
+import { localOuvrages, ManifestRepository } from "../sesamath/repository";
 import { DEFAULT_CROP_SCALE, DEFAULT_PAGE_SCALE } from "../sesamath/upscale";
 
 const numberParam = z.coerce.number().int().positive();
@@ -17,32 +18,52 @@ export const createApp = (repository = new ManifestRepository(DEFAULT_OUVRAGE)) 
   app.use(cors());
   app.use(express.json());
 
-  app.get("/", (_req, res) => {
-    res.type("html").send(`
-      <!doctype html>
-      <html lang="fr">
-      <head><meta charset="utf-8"><title>Sésamath Manuel API</title></head>
-      <body style="font-family:system-ui;margin:40px;line-height:1.5">
-        <h1>Sésamath Manuel API</h1>
-        <p>Endpoints principaux :</p>
-        <ul>
-          <li><a href="/health">/health</a></li>
-          <li><a href="/api/chapters">/api/chapters</a></li>
-          <li><a href="/api/pages?chapter=F10">/api/pages?chapter=F10</a></li>
-          <li><a href="/api/exercises?page=256">/api/exercises?page=256</a></li>
-          <li><a href="/api/exercises/60/crop?page=256&scale=4">/api/exercises/60/crop?page=256&scale=4</a></li>
-          <li><a href="/api/pages/256/upscaled-image?scale=2">/api/pages/256/upscaled-image?scale=2</a></li>
-          <li><a href="/api/openapi.json">/api/openapi.json</a></li>
-        </ul>
-      </body>
-      </html>
-    `);
+  const ouvrageFrom = (req: express.Request): string => {
+    return typeof req.query.ouvrage === "string" && req.query.ouvrage.trim() ? req.query.ouvrage.trim() : repository.ouvrageId();
+  };
+
+  const repositoryFor = (req: express.Request): ManifestRepository => {
+    const ouvrage = ouvrageFrom(req);
+    return ouvrage === repository.ouvrageId() ? repository : new ManifestRepository(ouvrage);
+  };
+
+  app.get("/", (req, res) => {
+    const currentRepository = repositoryFor(req);
+    let manifest = null;
+    let error: string | undefined;
+    try {
+      manifest = currentRepository.hasManifest() ? currentRepository.load() : null;
+    } catch (caught) {
+      error = caught instanceof Error ? caught.message : "Erreur inconnue";
+    }
+    res.type("html").send(homeHtml({ ouvrage: currentRepository.ouvrageId(), manifest, error }));
   });
 
-  app.get("/health", (_req, res) => {
-    const manifest = repository.load();
+  app.get("/view/exercise", (req, res) => {
+    const ouvrage = ouvrageFrom(req);
+    const page = numberParam.parse(req.query.page);
+    const exercise = numberParam.parse(req.query.exercise);
+    const scale = z.coerce.number().int().min(1).max(8).default(DEFAULT_CROP_SCALE).parse(req.query.scale);
+    const imageUrl = `/api/exercises/${exercise}/crop?page=${page}&scale=${scale}&ouvrage=${encodeURIComponent(ouvrage)}`;
+    res.type("html").send(exerciseViewHtml({ ouvrage, page, exercise, scale, imageUrl }));
+  });
+
+  app.get("/health", (req, res) => {
+    const currentRepository = repositoryFor(req);
+    if (!currentRepository.hasManifest()) {
+      res.json({
+        ok: false,
+        indexed: false,
+        ouvrage: currentRepository.ouvrageId(),
+        message: "Manifest local absent. Lance npm run build:index ou npm run sesa -- ex 60 p256.",
+      });
+      return;
+    }
+
+    const manifest = currentRepository.load();
     res.json({
       ok: true,
+      indexed: true,
       ouvrage: manifest.ouvrage,
       builtAt: manifest.builtAt,
       pages: manifest.pages.length,
@@ -54,20 +75,26 @@ export const createApp = (repository = new ManifestRepository(DEFAULT_OUVRAGE)) 
     res.json(openApiDocument);
   });
 
-  app.get("/api/chapters", (_req, res) => {
-    res.json({ chapters: repository.chapters() });
+  app.get("/api/ouvrages", (_req, res) => {
+    res.json({ presets: OUVRAGE_PRESETS, local: localOuvrages() });
+  });
+
+  app.get("/api/chapters", (req, res) => {
+    res.json({ chapters: repositoryFor(req).chapters() });
   });
 
   app.get("/api/pages", (req, res) => {
+    const currentRepository = repositoryFor(req);
     const from = optionalNumber.parse(req.query.from);
     const to = optionalNumber.parse(req.query.to);
     const chapter = typeof req.query.chapter === "string" ? req.query.chapter : undefined;
-    res.json({ pages: repository.pages({ chapter: chapter as never, from, to }) });
+    res.json({ pages: currentRepository.pages({ chapter: chapter as never, from, to }) });
   });
 
   app.get("/api/pages/:pageNumber", (req, res) => {
+    const currentRepository = repositoryFor(req);
     const pageNumber = numberParam.parse(req.params.pageNumber);
-    const page = repository.page(pageNumber);
+    const page = currentRepository.page(pageNumber);
     if (!page) {
       res.status(404).json({ error: `Page ${pageNumber} introuvable` });
       return;
@@ -76,13 +103,14 @@ export const createApp = (repository = new ManifestRepository(DEFAULT_OUVRAGE)) 
   });
 
   app.get("/api/pages/:pageNumber/image", (req, res) => {
+    const currentRepository = repositoryFor(req);
     const pageNumber = numberParam.parse(req.params.pageNumber);
-    const page = repository.page(pageNumber);
+    const page = currentRepository.page(pageNumber);
     if (!page) {
       res.status(404).json({ error: `Page ${pageNumber} introuvable` });
       return;
     }
-    const imagePath = repository.absoluteDataPath(page.imagePath);
+    const imagePath = currentRepository.absoluteDataPath(page.imagePath);
     if (!fs.existsSync(imagePath)) {
       res.status(404).json({ error: `Image locale absente pour la page ${pageNumber}` });
       return;
@@ -92,9 +120,10 @@ export const createApp = (repository = new ManifestRepository(DEFAULT_OUVRAGE)) 
 
   app.get("/api/pages/:pageNumber/upscaled-image", async (req, res, next) => {
     try {
+      const currentRepository = repositoryFor(req);
       const pageNumber = numberParam.parse(req.params.pageNumber);
       const scale = z.coerce.number().int().min(1).max(8).default(DEFAULT_PAGE_SCALE).parse(req.query.scale);
-      const page = repository.page(pageNumber);
+      const page = currentRepository.page(pageNumber);
       if (!page) {
         res.status(404).json({ error: `Page ${pageNumber} introuvable` });
         return;
@@ -106,25 +135,28 @@ export const createApp = (repository = new ManifestRepository(DEFAULT_OUVRAGE)) 
   });
 
   app.get("/api/exercises", (req, res) => {
+    const currentRepository = repositoryFor(req);
     const page = optionalNumber.parse(req.query.page);
     const number = optionalNumber.parse(req.query.number);
     const chapter = typeof req.query.chapter === "string" ? req.query.chapter : undefined;
     const query = typeof req.query.q === "string" ? req.query.q : undefined;
-    res.json({ exercises: repository.exercises({ page, number, chapter: chapter as never, query }) });
+    res.json({ exercises: currentRepository.exercises({ page, number, chapter: chapter as never, query }) });
   });
 
   app.get("/api/exercises/:exerciseNumber", (req, res) => {
+    const currentRepository = repositoryFor(req);
     const number = numberParam.parse(req.params.exerciseNumber);
     const page = optionalNumber.parse(req.query.page);
-    res.json({ exercises: repository.exercises({ number, page }) });
+    res.json({ exercises: currentRepository.exercises({ number, page }) });
   });
 
   app.get("/api/exercises/:exerciseNumber/crop", async (req, res, next) => {
     try {
+      const currentRepository = repositoryFor(req);
       const number = numberParam.parse(req.params.exerciseNumber);
       const page = numberParam.parse(req.query.page);
       const scale = z.coerce.number().int().min(1).max(8).default(DEFAULT_CROP_SCALE).parse(req.query.scale);
-      const exercise = repository.exerciseOrThrow(number, page);
+      const exercise = currentRepository.exerciseOrThrow(number, page);
       res.type("png").send(await cropExercise(exercise, scale));
     } catch (error) {
       next(error);
@@ -132,9 +164,10 @@ export const createApp = (repository = new ManifestRepository(DEFAULT_OUVRAGE)) 
   });
 
   app.get("/api/search", (req, res) => {
+    const currentRepository = repositoryFor(req);
     const query = typeof req.query.q === "string" ? req.query.q : "";
-    const exercises = repository.exercises({ query });
-    const pages = repository.pages().filter((page) => {
+    const exercises = currentRepository.exercises({ query });
+    const pages = currentRepository.pages().filter((page) => {
       return `${page.chapter} ${page.pageNumber} ${page.title}`.toLowerCase().includes(query.toLowerCase());
     });
     res.json({ query, pages, exercises });
