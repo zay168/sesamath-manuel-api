@@ -3,13 +3,14 @@ import express from "express";
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
-import { exerciseViewHtml, homeHtml, pageViewHtml } from "./home";
+import { compareHtml, exerciseViewHtml, homeHtml, pageViewHtml } from "./home";
 import { openApiDocument } from "./openapi";
 import { buildIndex } from "../sesamath/build";
-import { cropExercise, upscalePageImage } from "../sesamath/crop";
+import { cropExercise, cropExerciseLegacy, upscalePageImage, upscalePageImageLegacy } from "../sesamath/crop";
 import { DEFAULT_OUVRAGE, OUVRAGE_PRESETS } from "../sesamath/constants";
 import { localOuvrages, ManifestRepository } from "../sesamath/repository";
 import { DEFAULT_CROP_SCALE, DEFAULT_PAGE_SCALE } from "../sesamath/upscale";
+import { ensurePdf, isPdfCached, pdfRemoteUrl } from "../sesamath/pdf";
 
 const numberParam = z.coerce.number().int().positive();
 const optionalNumber = z.coerce.number().int().optional();
@@ -53,7 +54,7 @@ export const createApp = (repository = new ManifestRepository(DEFAULT_OUVRAGE)) 
     } catch (caught) {
       error = caught instanceof Error ? caught.message : "Erreur inconnue";
     }
-    res.type("html").send(homeHtml({ ouvrage: currentRepository.ouvrageId(), manifest, error }));
+    res.type("html").send(homeHtml({ ouvrage: currentRepository.ouvrageId(), manifest, error, pdfCached: isPdfCached(currentRepository.ouvrageId()) }));
   });
 
   app.get("/view/exercise", (req, res) => {
@@ -200,6 +201,71 @@ export const createApp = (repository = new ManifestRepository(DEFAULT_OUVRAGE)) 
     } catch (error) {
       next(error);
     }
+  });
+
+  // PDF management
+  app.get("/api/pdf/status", (req, res) => {
+    const ouvrage = ouvrageFrom(req);
+    res.json({ ouvrage, cached: isPdfCached(ouvrage), url: pdfRemoteUrl(ouvrage) });
+  });
+
+  app.post("/api/pdf/fetch", (req, res) => {
+    const ouvrage = ouvrageFrom(req);
+    if (isPdfCached(ouvrage)) {
+      res.json({ ok: true, cached: true });
+      return;
+    }
+    void ensurePdf(ouvrage)
+      .then(() => res.json({ ok: true, cached: false }))
+      .catch((err: unknown) => res.status(500).json({ ok: false, error: err instanceof Error ? err.message : "Erreur inconnue" }));
+  });
+
+  // Legacy endpoints (v1 pipeline) — used by the compare view
+  app.get("/api/pages/:pageNumber/upscaled-image-legacy", async (req, res, next) => {
+    try {
+      const currentRepository = repositoryFor(req);
+      const pageNumber = numberParam.parse(req.params.pageNumber);
+      const scale = z.coerce.number().int().min(1).max(8).default(DEFAULT_PAGE_SCALE).parse(req.query.scale);
+      const page = currentRepository.page(pageNumber);
+      if (!page) { res.status(404).json({ error: `Page ${pageNumber} introuvable` }); return; }
+      res.type("png").send(await upscalePageImageLegacy(page, scale));
+    } catch (error) { next(error); }
+  });
+
+  app.get("/api/exercises/:exerciseNumber/crop-legacy", async (req, res, next) => {
+    try {
+      const currentRepository = repositoryFor(req);
+      const number = numberParam.parse(req.params.exerciseNumber);
+      const page = numberParam.parse(req.query.page);
+      const scale = z.coerce.number().int().min(1).max(8).default(DEFAULT_CROP_SCALE).parse(req.query.scale);
+      const exercise = currentRepository.exerciseOrThrow(number, page);
+      res.type("png").send(await cropExerciseLegacy(exercise, scale));
+    } catch (error) { next(error); }
+  });
+
+  // Before/after comparison view
+  app.get("/view/compare", (req, res) => {
+    void (async () => {
+      const currentRepository = repositoryFor(req);
+      const ouvrage = currentRepository.ouvrageId();
+      const mode = typeof req.query.mode === "string" ? req.query.mode : "page";
+      const page = numberParam.default(256).parse(req.query.page);
+      const exercise = numberParam.default(60).parse(req.query.exercise);
+      const scale = z.coerce.number().int().min(1).max(8).default(mode === "exercise" ? DEFAULT_CROP_SCALE : DEFAULT_PAGE_SCALE).parse(req.query.scale);
+      await ensurePageIndexed(currentRepository, page);
+
+      const beforeUrl = mode === "exercise"
+        ? `/api/exercises/${exercise}/crop-legacy?page=${page}&scale=${scale}&ouvrage=${encodeURIComponent(ouvrage)}`
+        : `/api/pages/${page}/upscaled-image-legacy?scale=${scale}&ouvrage=${encodeURIComponent(ouvrage)}`;
+      const afterUrl = mode === "exercise"
+        ? `/api/exercises/${exercise}/crop?page=${page}&scale=${scale}&ouvrage=${encodeURIComponent(ouvrage)}`
+        : `/api/pages/${page}/upscaled-image?scale=${scale}&ouvrage=${encodeURIComponent(ouvrage)}`;
+
+      res.type("html").send(compareHtml({ ouvrage, mode, page, exercise, scale, beforeUrl, afterUrl }));
+    })().catch((error) => {
+      const message = error instanceof Error ? error.message : "Erreur inconnue";
+      res.status(400).type("html").send(homeHtml({ ouvrage: ouvrageFrom(req), manifest: null, error: message }));
+    });
   });
 
   app.get("/api/search", (req, res) => {
