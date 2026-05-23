@@ -22,16 +22,42 @@ const Lift: React.FC<{ children: React.ReactNode; delay?: number; className?: st
   );
 };
 
-const GoogleDots: React.FC<{ delay?: number }> = ({ delay = 0 }) => {
+const BrandMark: React.FC<{ delay?: number }> = ({ delay = 0 }) => {
   const frame = useCurrentFrame();
   const progress = reveal(frame, delay, 20);
 
   return (
-    <div className="google-dots" style={{ opacity: progress }}>
-      <span className="dot blue" />
-      <span className="dot red" />
-      <span className="dot yellow" />
-      <span className="dot green" />
+    <div
+      style={{
+        position: "absolute",
+        top: 58,
+        left: 72,
+        zIndex: 10,
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        opacity: progress,
+      }}
+    >
+      <span
+        style={{
+          width: 14,
+          height: 14,
+          borderRadius: 999,
+          background: "#c96438",
+          flexShrink: 0,
+        }}
+      />
+      <span
+        style={{
+          color: "#1c1916",
+          fontSize: 28,
+          fontWeight: 700,
+          fontFamily: '"Inter", ui-sans-serif, system-ui, sans-serif',
+        }}
+      >
+        Sesamath
+      </span>
     </div>
   );
 };
@@ -55,19 +81,19 @@ const ApiDiagram: React.FC = () => {
 
   return (
     <svg viewBox="0 0 1180 500" className="diagram">
-      <rect x="56" y="96" width="290" height="164" rx="28" className="diagram-card card-blue" />
-      <rect x="445" y="96" width="290" height="164" rx="28" className="diagram-card card-yellow" />
-      <rect x="834" y="96" width="290" height="164" rx="28" className="diagram-card card-green" />
+      <rect x="56" y="96" width="290" height="164" rx="28" className="diagram-card card-orange" />
+      <rect x="445" y="96" width="290" height="164" rx="28" className="diagram-card card-sand" />
+      <rect x="834" y="96" width="290" height="164" rx="28" className="diagram-card card-warm" />
 
-      <text x="201" y="160" textAnchor="middle" className="diagram-title">Pages GIF</text>
-      <text x="201" y="204" textAnchor="middle" className="diagram-sub">image + zones HTML</text>
-      <text x="590" y="160" textAnchor="middle" className="diagram-title">Manifest</text>
-      <text x="590" y="204" textAnchor="middle" className="diagram-sub">page, exo, rectangle</text>
-      <text x="979" y="160" textAnchor="middle" className="diagram-title">API locale</text>
-      <text x="979" y="204" textAnchor="middle" className="diagram-sub">JSON + PNG upscale</text>
+      <text x="201" y="160" textAnchor="middle" className="diagram-title">PDF Sesamath</text>
+      <text x="201" y="204" textAnchor="middle" className="diagram-sub">source vectorielle</text>
+      <text x="590" y="160" textAnchor="middle" className="diagram-title">poppler 300 DPI</text>
+      <text x="590" y="204" textAnchor="middle" className="diagram-sub">render page</text>
+      <text x="979" y="160" textAnchor="middle" className="diagram-title">PNG net</text>
+      <text x="979" y="204" textAnchor="middle" className="diagram-sub">crop + API</text>
 
-      <path d="M370 178 H421" className="diagram-flow blue-flow" pathLength="1" strokeDasharray="1" strokeDashoffset={1 - line} />
-      <path d="M759 178 H810" className="diagram-flow green-flow" pathLength="1" strokeDasharray="1" strokeDashoffset={1 - line} />
+      <path d="M370 178 H421" className="diagram-flow orange-flow" pathLength="1" strokeDasharray="1" strokeDashoffset={1 - line} />
+      <path d="M759 178 H810" className="diagram-flow warm-flow" pathLength="1" strokeDasharray="1" strokeDashoffset={1 - line} />
 
       <rect x="126" y="336" width="928" height="82" rx="24" className="endpoint-box" />
       <text x="590" y="388" textAnchor="middle" className="endpoint-text">GET /api/exercises/60/crop?page=256&amp;scale=5</text>
@@ -82,20 +108,20 @@ export const SesamathApiVideo: React.FC = () => {
   return (
     <AbsoluteFill className="video-root">
       <div className="material-grid" style={{ transform: `translateX(${-80 * slowMove}px)` }} />
-      <GoogleDots delay={4} />
+      <BrandMark delay={4} />
 
       <Sequence durationInFrames={150}>
         <AbsoluteFill className="scene hero-scene">
           <Lift delay={8} className="hero-copy">
             <div className="product-label">Sesamath Manuel API</div>
             <h1>Le manuel devient une surface interrogeable.</h1>
-            <p>Pages, exercices, recherche, crops PNG et images GIF upscalées dans un serveur local.</p>
+            <p>Pages, exercices, crops PNG. Images vectorielles via PDF Sesamath + poppler 300 DPI.</p>
           </Lift>
           <Lift delay={34} className="hero-chip-row">
-            <span className="chip blue-chip">390 pages</span>
-            <span className="chip red-chip">1933 exercices</span>
-            <span className="chip yellow-chip">OpenAPI</span>
-            <span className="chip green-chip">Remotion</span>
+            <span className="chip orange-chip">PDF vectoriel</span>
+            <span className="chip sand-chip">390 pages</span>
+            <span className="chip warm-chip">1 933 exercices</span>
+            <span className="chip neutral-chip">OpenAPI</span>
           </Lift>
         </AbsoluteFill>
       </Sequence>
@@ -116,11 +142,11 @@ export const SesamathApiVideo: React.FC = () => {
         <AbsoluteFill className="scene crop-scene">
           <Lift delay={0} className="section-title compact-title">
             <span>Qualité image</span>
-            <h2>Le crop est agrandi avec Lanczos3 puis affûté légèrement.</h2>
+            <h2>Du PDF vectoriel au PNG. Aucun upscaling.</h2>
           </Lift>
           <Lift delay={12} className="command-stack">
             <CommandLine delay={18} label="build" text="npm run build:index" />
-            <CommandLine delay={42} label="api" text="npm run api" />
+            <CommandLine delay={42} label="pdf" text="npm run api  → Télécharger PDF (100 MB)" />
             <CommandLine delay={66} label="crop" text="/api/exercises/60/crop?page=256&scale=5" />
           </Lift>
           <Lift delay={28} className="browser-frame">
@@ -145,10 +171,10 @@ export const SesamathApiVideo: React.FC = () => {
             <h2>Un outil local, pas une capture figée.</h2>
           </Lift>
           <Lift delay={18} className="repo-grid">
-            <div className="repo-card blue-border"><strong>src/api</strong><span>Express, routes, OpenAPI</span></div>
-            <div className="repo-card red-border"><strong>src/sesamath</strong><span>manifest, parsing, crops</span></div>
-            <div className="repo-card yellow-border"><strong>scripts</strong><span>build, smoke, assets video</span></div>
-            <div className="repo-card green-border"><strong>src/video</strong><span>composition Remotion</span></div>
+            <div className="repo-card border-1"><strong>src/api</strong><span>Express, routes, OpenAPI</span></div>
+            <div className="repo-card border-2"><strong>src/sesamath</strong><span>manifest, parser, crops, PDF</span></div>
+            <div className="repo-card border-3"><strong>src/sesamath/pdf.ts</strong><span>download PDF, render poppler, cache</span></div>
+            <div className="repo-card border-4"><strong>src/video</strong><span>composition Remotion</span></div>
           </Lift>
         </AbsoluteFill>
       </Sequence>

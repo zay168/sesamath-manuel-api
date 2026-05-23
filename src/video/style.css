@@ -3,9 +3,9 @@
 }
 
 .video-root {
-  background: #ffffff;
-  color: #202124;
-  font-family: "Google Sans", "Product Sans", Arial, Helvetica, sans-serif;
+  background: #f7f3ed;
+  color: #1c1916;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   overflow: hidden;
 }
 
@@ -14,40 +14,9 @@
   inset: -120px;
   width: 2300px;
   background-image:
-    linear-gradient(90deg, rgba(60, 64, 67, 0.045) 1px, transparent 1px),
-    linear-gradient(rgba(60, 64, 67, 0.045) 1px, transparent 1px);
+    linear-gradient(90deg, rgba(50, 30, 10, 0.038) 1px, transparent 1px),
+    linear-gradient(rgba(50, 30, 10, 0.038) 1px, transparent 1px);
   background-size: 72px 72px;
-}
-
-.google-dots {
-  position: absolute;
-  top: 58px;
-  left: 72px;
-  z-index: 10;
-  display: flex;
-  gap: 14px;
-}
-
-.dot {
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-}
-
-.blue {
-  background: #4285f4;
-}
-
-.red {
-  background: #ea4335;
-}
-
-.yellow {
-  background: #fbbc04;
-}
-
-.green {
-  background: #34a853;
 }
 
 .scene {
@@ -67,13 +36,13 @@
 .product-label {
   width: max-content;
   padding: 12px 22px;
-  border: 1px solid #dadce0;
+  border: 1px solid #e3dbd2;
   border-radius: 999px;
-  color: #3c4043;
+  color: #1c1916;
   font-size: 30px;
   font-weight: 700;
-  background: #ffffff;
-  box-shadow: 0 6px 18px rgba(60, 64, 67, 0.08);
+  background: #f7f3ed;
+  box-shadow: 0 6px 18px rgba(50, 30, 10, 0.09);
 }
 
 h1,
@@ -101,7 +70,7 @@ h2 {
 p {
   margin-top: 26px;
   max-width: 1040px;
-  color: #5f6368;
+  color: #7d7069;
   font-size: 34px;
   line-height: 1.34;
 }
@@ -119,30 +88,30 @@ p {
   font-weight: 700;
 }
 
-.blue-chip {
-  color: #174ea6;
-  background: #e8f0fe;
+.orange-chip {
+  color: #a34e2a;
+  background: #f0e6dc;
 }
 
-.red-chip {
-  color: #a50e0e;
-  background: #fce8e6;
+.sand-chip {
+  color: #6b4e30;
+  background: #f5ede3;
 }
 
-.yellow-chip {
-  color: #7a4700;
-  background: #fef7e0;
+.warm-chip {
+  color: #7a3618;
+  background: #fdf5ee;
 }
 
-.green-chip {
-  color: #0d652d;
-  background: #e6f4ea;
+.neutral-chip {
+  color: #3d3530;
+  background: #f3ede5;
 }
 
 .section-title span {
   display: block;
   margin-bottom: 12px;
-  color: #4285f4;
+  color: #c96438;
   font-size: 28px;
   font-weight: 700;
 }
@@ -153,10 +122,10 @@ p {
 }
 
 .material-panel {
-  border: 1px solid #dadce0;
+  border: 1px solid #e3dbd2;
   border-radius: 32px;
-  background: #ffffff;
-  box-shadow: 0 24px 70px rgba(60, 64, 67, 0.12);
+  background: #f7f3ed;
+  box-shadow: 0 24px 70px rgba(50, 30, 10, 0.09);
 }
 
 .wide-panel {
@@ -170,30 +139,30 @@ p {
 }
 
 .diagram-card {
-  stroke: rgba(60, 64, 67, 0.14);
+  stroke: rgba(50, 30, 10, 0.14);
   stroke-width: 2;
 }
 
-.card-blue {
-  fill: #e8f0fe;
+.card-orange {
+  fill: #f0e6dc;
 }
 
-.card-yellow {
-  fill: #fef7e0;
+.card-sand {
+  fill: #f5ede3;
 }
 
-.card-green {
-  fill: #e6f4ea;
+.card-warm {
+  fill: #fdf5ee;
 }
 
 .diagram-title {
-  fill: #202124;
+  fill: #1c1916;
   font-size: 34px;
   font-weight: 700;
 }
 
 .diagram-sub {
-  fill: #5f6368;
+  fill: #7d7069;
   font-size: 24px;
 }
 
@@ -203,23 +172,23 @@ p {
   stroke-linecap: round;
 }
 
-.blue-flow {
-  stroke: #4285f4;
+.orange-flow {
+  stroke: #c96438;
 }
 
-.green-flow {
-  stroke: #34a853;
+.warm-flow {
+  stroke: #a34e2a;
 }
 
 .endpoint-box {
-  fill: #f8fafd;
-  stroke: #dadce0;
+  fill: #f3ede5;
+  stroke: #e3dbd2;
   stroke-width: 2;
 }
 
 .endpoint-text {
-  fill: #202124;
-  font-family: "Roboto Mono", Consolas, monospace;
+  fill: #1c1916;
+  font-family: ui-monospace, Consolas, monospace;
   font-size: 31px;
   font-weight: 700;
 }
@@ -243,21 +212,21 @@ p {
   align-items: center;
   min-height: 72px;
   padding: 0 24px;
-  border: 1px solid #dadce0;
+  border: 1px solid #e3dbd2;
   border-radius: 22px;
-  background: #ffffff;
-  box-shadow: 0 12px 32px rgba(60, 64, 67, 0.10);
+  background: #f7f3ed;
+  box-shadow: 0 12px 32px rgba(50, 30, 10, 0.09);
 }
 
 .command-line span {
-  color: #4285f4;
+  color: #c96438;
   font-size: 24px;
   font-weight: 700;
 }
 
 .command-line code {
-  color: #202124;
-  font-family: "Roboto Mono", Consolas, monospace;
+  color: #1c1916;
+  font-family: ui-monospace, Consolas, monospace;
   font-size: 25px;
   white-space: nowrap;
 }
@@ -268,10 +237,10 @@ p {
   bottom: 92px;
   width: 900px;
   height: 704px;
-  border: 1px solid #dadce0;
+  border: 1px solid #e3dbd2;
   border-radius: 30px;
-  background: #ffffff;
-  box-shadow: 0 28px 90px rgba(60, 64, 67, 0.16);
+  background: #f7f3ed;
+  box-shadow: 0 28px 90px rgba(50, 30, 10, 0.12);
   overflow: hidden;
 }
 
@@ -281,8 +250,8 @@ p {
   align-items: center;
   gap: 12px;
   padding: 0 24px;
-  border-bottom: 1px solid #eceff1;
-  background: #f8fafd;
+  border-bottom: 1px solid #e3dbd2;
+  background: #f3ede5;
 }
 
 .browser-bar span {
@@ -292,21 +261,21 @@ p {
 }
 
 .browser-bar span:nth-child(1) {
-  background: #ea4335;
+  background: #c96438;
 }
 
 .browser-bar span:nth-child(2) {
-  background: #fbbc04;
+  background: #a34e2a;
 }
 
 .browser-bar span:nth-child(3) {
-  background: #34a853;
+  background: #7a3618;
 }
 
 .browser-bar code {
   margin-left: 18px;
-  color: #5f6368;
-  font-family: "Roboto Mono", Consolas, monospace;
+  color: #7d7069;
+  font-family: ui-monospace, Consolas, monospace;
   font-size: 22px;
 }
 
@@ -314,7 +283,7 @@ p {
   position: relative;
   height: 632px;
   padding: 26px;
-  background: #ffffff;
+  background: #f7f3ed;
 }
 
 .page-preview {
@@ -325,7 +294,7 @@ p {
   height: 578px;
   object-fit: cover;
   object-position: top left;
-  border: 1px solid #dadce0;
+  border: 1px solid #e3dbd2;
   border-radius: 18px;
   opacity: 0.48;
 }
@@ -337,10 +306,10 @@ p {
   width: 690px;
   max-height: 470px;
   object-fit: contain;
-  border: 1px solid #dadce0;
+  border: 1px solid #e3dbd2;
   border-radius: 20px;
-  background: #ffffff;
-  box-shadow: 0 20px 58px rgba(60, 64, 67, 0.20);
+  background: #f7f3ed;
+  box-shadow: 0 20px 58px rgba(50, 30, 10, 0.16);
 }
 
 .final-scene {
@@ -359,39 +328,39 @@ p {
 .repo-card {
   min-height: 214px;
   padding: 30px;
-  border: 1px solid #dadce0;
+  border: 1px solid #e3dbd2;
   border-top-width: 8px;
   border-radius: 28px;
-  background: #ffffff;
-  box-shadow: 0 18px 52px rgba(60, 64, 67, 0.10);
+  background: #f7f3ed;
+  box-shadow: 0 18px 52px rgba(50, 30, 10, 0.09);
 }
 
 .repo-card strong {
   display: block;
   margin-bottom: 18px;
-  color: #202124;
+  color: #1c1916;
   font-size: 34px;
 }
 
 .repo-card span {
   display: block;
-  color: #5f6368;
+  color: #7d7069;
   font-size: 27px;
   line-height: 1.25;
 }
 
-.blue-border {
-  border-top-color: #4285f4;
+.border-1 {
+  border-top-color: #c96438;
 }
 
-.red-border {
-  border-top-color: #ea4335;
+.border-2 {
+  border-top-color: #a34e2a;
 }
 
-.yellow-border {
-  border-top-color: #fbbc04;
+.border-3 {
+  border-top-color: #7a3618;
 }
 
-.green-border {
-  border-top-color: #34a853;
+.border-4 {
+  border-top-color: #6b4e30;
 }
